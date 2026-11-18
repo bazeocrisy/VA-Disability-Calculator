@@ -110,42 +110,117 @@ describe('release approval gate', () => {
   });
 });
 
-describe('repository state', () => {
-  const root = resolve(__dirname, '../..');
-  it('docs/audit.md is NOT currently approved for release (for any reviewer name)', () => {
-    const audit = readFileSync(resolve(root, 'docs/audit.md'), 'utf8');
-    for (const name of ['Any Reviewer', 'Marcus T. Hill', 'bazeocrisy']) {
-      expect(checkReleaseApproval(audit, name).ok).toBe(false);
+const ROOT = resolve(__dirname, '../..');
+const fixture = (name: string) => readFileSync(resolve(__dirname, 'fixtures', name), 'utf8');
+const NAME = 'Marcus T. Hill';
+const RECORD_LINE = /^APPROVED FOR RELEASE — Reviewer: /;
+
+describe('deployment checker on audit fixtures (independent of the live audit.md state)', () => {
+  const unapproved = fixture('audit-awaiting-approval.md');
+  const approved = fixture('audit-approved.md');
+
+  it('unapproved audit is rejected for any reviewer', () => {
+    for (const name of [NAME, 'Any Reviewer']) {
+      const r = checkReleaseApproval(unapproved, name, TODAY);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.reason).toMatch(/Negated/);
     }
-    // and contains no approval-format line outside code blocks
-    const outsideFences = audit.replace(/```[\s\S]*?```/g, '');
-    expect(outsideFences).not.toMatch(/^\s*APPROVED FOR RELEASE — Reviewer:/m);
-  });
-  it('following the documented procedure on the real audit.md yields a valid approval (docs do not self-block)', () => {
-    const audit = readFileSync(resolve(root, 'docs/audit.md'), 'utf8');
-    const withoutStatus = audit
-      .split('\n')
-      .filter((l) => !/Release status: NOT APPROVED/.test(l))
-      .join('\n');
-    const approved = withoutStatus + '\nAPPROVED FOR RELEASE — Reviewer: Marcus T. Hill — Date: 2026-12-01\n';
-    expect(checkReleaseApproval(approved, 'Marcus T. Hill', '2026-12-15')).toEqual({
-      ok: true,
-      reviewer: 'Marcus T. Hill',
-      date: '2026-12-01',
-    });
-    // ...but the same record indented as an example would not
-    const indented = withoutStatus + '\n\n    APPROVED FOR RELEASE — Reviewer: Marcus T. Hill — Date: 2026-12-01\n';
-    expect(checkReleaseApproval(indented, 'Marcus T. Hill', '2026-12-15').ok).toBe(false);
+    // even with the status line removed, the fenced example alone authorizes nothing
+    const noStatus = unapproved.replace(/^\*\*Release status: NOT APPROVED\.\*\*.*$/m, '');
+    expect(checkReleaseApproval(noStatus, NAME, TODAY)).toMatchObject({ ok: false, reason: expect.stringMatching(/No approval record/) });
   });
 
+  it('valid approved audit is accepted for the recorded reviewer', () => {
+    expect(checkReleaseApproval(approved, NAME, TODAY)).toEqual({ ok: true, reviewer: NAME, date: '2026-12-01' });
+    expect(checkReleaseApproval(approved.replace(/\n/g, '\r\n'), NAME, TODAY).ok).toBe(true);
+  });
+
+  it('approved audit is rejected for a mismatched reviewer', () => {
+    for (const name of ['Someone Else', 'marcus t. hill', 'Marcus Hill', '']) {
+      expect(checkReleaseApproval(approved, name, TODAY).ok, name).toBe(false);
+    }
+  });
+
+  it('approved audit with an invalid record is rejected', () => {
+    const variants: [string, RegExp][] = [
+      [approved.replace('Date: 2026-12-01', 'Date: 2026-02-30'), /date/],
+      [approved.replace('Date: 2026-12-01', 'Date: 2027-01-01'), /date/],
+      [approved.replace('Reviewer: Marcus T. Hill', 'Reviewer: <your full name>'), /placeholder/],
+      [approved.replace('APPROVED FOR RELEASE — Reviewer: Marcus T. Hill', 'APPROVED FOR RELEASE: Marcus T. Hill'), /Malformed/],
+      [approved + '\nAPPROVED FOR RELEASE — Reviewer: Ana Ruiz — Date: 2026-12-02\n', /exactly one/],
+      [approved + '\nApproval revoked pending fixes.\n', /Negated/],
+    ];
+    for (const [md, reason] of variants) {
+      const r = checkReleaseApproval(md, NAME, TODAY);
+      expect(r.ok).toBe(false);
+      if (!r.ok) expect(r.reason).toMatch(reason);
+    }
+  });
+
+  it('approved audit whose record is indented (4 spaces or tab) is rejected', () => {
+    for (const indent of ['    ', '\t']) {
+      const md = approved.replace(/^APPROVED FOR RELEASE — Reviewer: Marcus/m, `${indent}APPROVED FOR RELEASE — Reviewer: Marcus`);
+      const r = checkReleaseApproval(md, NAME, TODAY);
+      expect(r).toMatchObject({ ok: false, reason: expect.stringMatching(/indented/) });
+    }
+  });
+
+  it('the instructions themselves never contain negated approval wording (only the status line does)', () => {
+    for (const md of [readFileSync(resolve(ROOT, 'docs/audit.md'), 'utf8'), unapproved, approved]) {
+      const negated = md.split('\n').filter((l) => /not\s+approved/i.test(l));
+      expect(negated.every((l) => l.startsWith('**Release status: NOT APPROVED.**'))).toBe(true);
+    }
+  });
+
+  it('fixtures follow the same approval instructions as the live audit.md', () => {
+    const live = readFileSync(resolve(ROOT, 'docs/audit.md'), 'utf8');
+    const example = 'APPROVED FOR RELEASE — Reviewer: <your full name> — Date: YYYY-MM-DD';
+    for (const md of [live, unapproved, approved]) expect(md).toContain('```text\n' + example + '\n```');
+  });
+});
+
+describe('live docs/audit.md (valid in BOTH legitimate states: awaiting approval, or validly approved)', () => {
+  const live = readFileSync(resolve(ROOT, 'docs/audit.md'), 'utf8');
+  const unfenced = live.replace(/```[\s\S]*?```/g, '');
+  const records = unfenced.split(/\r?\n/).filter((l) => /approved for release/i.test(l));
+
+  it('is either clearly awaiting approval or carries one record that the gate accepts', () => {
+    if (records.length === 0) {
+      // Awaiting approval: the explicit status line must be present and the gate must block.
+      expect(live).toMatch(/Release status: NOT APPROVED/);
+      expect(checkReleaseApproval(live, NAME).ok).toBe(false);
+    } else {
+      // Approved: exactly one record, and it passes the real gate for its own reviewer.
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatch(RECORD_LINE);
+      const name = /Reviewer: (.+?) — Date:/.exec(records[0])![1];
+      expect(checkReleaseApproval(live, name)).toMatchObject({ ok: true, reviewer: name });
+    }
+  });
+
+  it('the documented procedure applied to the live audit.md yields a valid approval (prose never self-blocks)', () => {
+    const withoutStatusOrRecord = live
+      .split('\n')
+      // exactly what the instructions say: delete ONLY the bold status line (and any prior record)
+      .filter((l) => !l.startsWith('**Release status: NOT APPROVED.**') && !RECORD_LINE.test(l))
+      .join('\n');
+    const approved = withoutStatusOrRecord + `\nAPPROVED FOR RELEASE — Reviewer: ${NAME} — Date: 2026-12-01\n`;
+    expect(checkReleaseApproval(approved, NAME, TODAY)).toEqual({ ok: true, reviewer: NAME, date: '2026-12-01' });
+    const indented = withoutStatusOrRecord + `\n\n    APPROVED FOR RELEASE — Reviewer: ${NAME} — Date: 2026-12-01\n`;
+    expect(checkReleaseApproval(indented, NAME, TODAY).ok).toBe(false);
+  });
+});
+
+describe('deploy workflow', () => {
   it('deploy.yml is manual, main-only, and runs the approval checker before building', () => {
-    const wf = readFileSync(resolve(root, '.github/workflows/deploy.yml'), 'utf8');
+    const wf = readFileSync(resolve(ROOT, '.github/workflows/deploy.yml'), 'utf8');
     expect(wf).toMatch(/^on:\n  workflow_dispatch:/m);
     expect(wf).not.toMatch(/^\s+(push|pull_request|schedule):/m);
     expect(wf).toContain('"$GITHUB_REF" != "refs/heads/main"');
     expect(wf).toContain("if: github.ref == 'refs/heads/main'");
     const gate = wf.indexOf('node scripts/release-approval.mjs docs/audit.md "$REVIEWER"');
     expect(gate).toBeGreaterThan(0);
+    expect(gate).toBeLessThan(wf.indexOf('npm test'));
     expect(gate).toBeLessThan(wf.indexOf('npm run build'));
     expect(wf).toContain('REVIEWER: ${{ inputs.reviewer }}'); // passed via env, never interpolated into the script
   });

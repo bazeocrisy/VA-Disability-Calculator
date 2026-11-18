@@ -71,7 +71,7 @@ Reviewer confirmed 80 tests, typecheck, production build and GitHub CI pass, and
 
 Fix (`scripts/release-approval.mjs`): every approval-like line is validated **raw**. A line starting with a space, tab or non-breaking space is rejected as indented; the raw line must match the exact format (no extra internal or trailing whitespace; CRLF line endings tolerated). An indented example anywhere in the file blocks release even if a genuine record is also present.
 
-Regression checks (`src/test/release-approval.test.ts`, now 17 tests):
+Regression checks (`src/test/release-approval.test.ts`, 17 tests at 7ac0497; restructured in 1j):
 - 4-space, tab, 8-space, mixed, 1–3-space, non-breaking-space and list-nested indented records cannot authorize release;
 - an indented example next to a genuine record still blocks;
 - irregular internal/trailing whitespace is rejected;
@@ -80,6 +80,25 @@ Regression checks (`src/test/release-approval.test.ts`, now 17 tests):
 - following the documented approval procedure on the real `audit.md` yields a valid approval (the document's own prose cannot self-block), while the same record indented does not.
 
 Mutation check: the three new indentation/whitespace tests **fail against the f56e161 checker** and pass with the fix. CLI check: 4-space and tab-indented files exit 1 with "Approval line is indented"; a standalone record exits 0; the current audit exits 1.
+
+### 1j. Fourth independent review (commit 7ac0497) — release-lifecycle conflict fixed
+
+Reviewer confirmed the indentation fix, 85 tests, typecheck, build and GitHub CI. Remaining issue: a repository-state test required the live `audit.md` to contain no approval, so a legitimate future approval would fail `npm test`, which `deploy.yml` runs.
+
+Fix (`src/test/release-approval.test.ts`, gate logic unchanged):
+- Live-state assertion replaced by **fixtures** (`src/test/fixtures/audit-awaiting-approval.md`, `audit-approved.md`): awaiting-approval fixture rejected for any reviewer; valid approved accepted (LF and CRLF); mismatched reviewer, invalid/future date, placeholder, malformed, duplicate, revoked and 4-space/tab-indented records rejected.
+- The live `audit.md` is checked only for **state-independent invariants**: it is either awaiting approval (status line present, gate blocks) or carries exactly one record that the gate accepts for its own reviewer.
+- **Second defect found while doing this:** step 1 of the approval instructions quoted the bold status line word-for-word, so the instruction itself contained the negated wording the gate rejects — a reviewer who deleted only the status line as instructed would still have been blocked. The earlier procedure test missed it because its filter also removed the instruction line. Instruction reworded ("Delete the bold release-status line above"); the procedure test now deletes only the exact status line; a new test asserts that only the bold status line may contain negated approval wording.
+
+Lifecycle verification on the real repository (then restored):
+
+| State of live `audit.md` | Gate (`release-approval.mjs`) | typecheck | `npm test` | build |
+|---|---|---|---|---|
+| Awaiting approval (as committed) | exit 1 (negated status) | pass | 92 / 92 | pass |
+| Validly approved via documented procedure (status line deleted, one record added) | exit 0; wrong / differently-cased name exit 1 | pass | 92 / 92 | pass |
+| Illegitimate: record indented 4 spaces | exit 1 (indented) | — | 2 failures (expected) | — |
+
+The live `audit.md` was restored to its awaiting-approval state afterwards (byte-identical to the pre-simulation copy).
 
 ### 1h. VA-recognized permanently incapable adult child
 
@@ -100,7 +119,7 @@ Not priced (no verified VA rate rule captured in evidence yet). The calculator c
 | Check | Result |
 |---|---|
 | TypeScript (`tsc -b`, strict) | PASS — 0 errors |
-| Automated tests (`vitest run`) | PASS — 85 tests in 5 files; 0 React/console warnings |
+| Automated tests (`vitest run`) | PASS — 92 tests in 5 files; 0 React/console warnings |
 | Production build (`vite build`) | PASS — JS 187 kB (60 kB gzip), CSS 30 kB (6 kB gzip); fonts self-hosted |
 | GitHub Pages base | PASS — `base: '/VA-Disability-Calculator/'`; CI greps built `index.html` for it |
 | Responsive layout | PASS — 1440×900 desktop and iPhone 13: no horizontal overflow (`scrollWidth ≤ innerWidth`) |
@@ -137,7 +156,7 @@ No forms submit anywhere; no network requests after load (fonts bundled); no coo
 
 ### How to record approval (for the human reviewer only)
 
-1. Delete the "Release status: NOT APPROVED" line above (the gate rejects any negated approval text).
+1. Delete the bold release-status line above (the gate rejects any negated approval wording, so it must go).
 2. Add exactly one line, on its own, **not indented** (no leading spaces or tabs), outside any code block, in this exact form:
 
 ```text
