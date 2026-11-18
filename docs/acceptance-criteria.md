@@ -8,5 +8,5 @@
 - [ ] Money handled as integer cents; rounding documented
 - [ ] Automated unit tests, build, mobile and accessibility checks pass
 - [ ] Privacy review complete: no personal data collection
-- [ ] GitHub Pages base uses /VA-Disability-Calculater/
+- [ ] GitHub Pages base uses /VA-Disability-Calculator/
 - [ ] docs/audit.md includes test evidence and approval
