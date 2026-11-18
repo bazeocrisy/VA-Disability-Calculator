@@ -57,7 +57,7 @@ Concerns noted (not defects), handled as documented limitations: school-child-on
 | Check | Result | Evidence |
 |---|---|---|
 | All six branches visibly represented | PASS — Army, Navy, Marine Corps, Air Force, Coast Guard, Space Force each shown with establishment year (1775, 1775, 1775, 1947, 1790, 2019) | `docs/screenshots/desktop-home.png`; UI test "represents all six branches" |
-| Black male and female service members in hero art | **NOT MET YET** — candidate generated in Canva but not exportable to the repo or reviewable at full size; labeled placeholder shown instead | [hero-artwork.md](hero-artwork.md) |
+| Black male and female service members in hero art | PASS — six Black service members (3 men, 3 women, varied ages), one per branch, before the flag; reviewed at full size against the checklist | [hero-artwork.md](hero-artwork.md); `docs/screenshots/*-home.png`; UI test checks alt text and responsive sources |
 | Accurate flag imagery | PASS — 13 stripes (7 red), 50 stars in 9 alternating rows of 6/5, EO 10834 proportions (1 : 1.9, union 7/13 × 0.76) | `src/components/AmericanFlag.tsx`; UI tests assert 50 stars, 7 red stripes, proportions |
 | Color balance | Navy #071B33 / military #12365A / red #B22234 / white / gold #D4AF37 / charcoal intro band | screenshots |
 | No unreadable text over images | PASS — headline sits on a ≥ 82% navy scrim; axe color-contrast reports 0 violations | section 4 |
@@ -98,6 +98,6 @@ No forms submit anywhere; no network requests after load (fonts bundled); no coo
 |---|---|
 | Independent automated calculation review | Done — 1 defect (D1) found and fixed; see 1f |
 | Human accuracy review | **Not yet performed** |
-| Hero artwork review | **Not yet performed** (no final asset) |
+| Hero artwork review | Done by Claude 2026-11-18 (see hero-artwork.md); owner to confirm |
 
 **Release status: NOT APPROVED.** Deployment stays blocked until a human reviewer records approval here.

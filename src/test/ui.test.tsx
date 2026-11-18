@@ -31,9 +31,15 @@ describe('App', () => {
     expect(BRANCHES).toHaveLength(6);
   });
 
-  it('labels the hero artwork placeholder honestly until reviewed art exists', () => {
-    render(<App />);
-    expect(screen.getByRole('img', { name: /Placeholder for hero artwork/i })).toBeTruthy();
+  it('shows the reviewed hero artwork with descriptive alt text and responsive sources', () => {
+    const { container } = render(<App />);
+    const img = screen.getByRole('img', { name: /Six Black American service members/i }) as HTMLImageElement;
+    expect(img.getAttribute('alt')).toMatch(/Army, Navy, Marine Corps, Air Force, Coast Guard, and Space Force/);
+    expect(img.getAttribute('src')).toMatch(/hero\/service-members-960\.jpg$/);
+    const sources = container.querySelectorAll('.hero__art source');
+    expect(sources).toHaveLength(2);
+    expect(sources[0].getAttribute('srcset')).toMatch(/service-members-1600\.webp 1600w/);
+    expect(screen.queryByRole('img', { name: /Placeholder for hero artwork/i })).toBeNull();
   });
 
   it('labels 2026 official and 2027 PROJECTED results with dates', () => {

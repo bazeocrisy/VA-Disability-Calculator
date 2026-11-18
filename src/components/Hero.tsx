@@ -52,14 +52,24 @@ export function Hero({ onCompensation, onCombined }: Props) {
 
         <figure className={`hero__art ${art ? '' : 'hero__art--placeholder'}`}>
           {art ? (
-            <img
-              src={`${import.meta.env.BASE_URL}${art.src}`}
-              alt={art.alt}
-              width={1200}
-              height={675}
-              fetchPriority="high"
-              decoding="async"
-            />
+            <picture>
+              {(['webp', 'jpg'] as const).map((ext) => (
+                <source
+                  key={ext}
+                  type={ext === 'webp' ? 'image/webp' : 'image/jpeg'}
+                  srcSet={art.widths.map((w) => `${import.meta.env.BASE_URL}${art.basename}-${w}.${ext} ${w}w`).join(', ')}
+                  sizes="(min-width: 1200px) 560px, (min-width: 980px) 46vw, calc(100vw - 32px)"
+                />
+              ))}
+              <img
+                src={`${import.meta.env.BASE_URL}${art.basename}-${art.widths[0]}.jpg`}
+                alt={art.alt}
+                width={art.width}
+                height={art.height}
+                fetchPriority="high"
+                decoding="async"
+              />
+            </picture>
           ) : (
             <div className="art-placeholder" role="img" aria-label="Placeholder for hero artwork: six Black American service members, one from each of the six military branches, standing together before the American flag. Final artwork pending review.">
               <AmericanFlag className="art-placeholder__flag" waving={false} />

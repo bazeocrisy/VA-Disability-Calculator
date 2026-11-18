@@ -230,6 +230,12 @@ h3 {
     linear-gradient(180deg, rgba(7, 27, 51, 0) 55%, rgba(7, 27, 51, 0.92) 100%);
 }
 @media (max-width: 979px) {
+  .hero {
+    padding-top: 20px;
+  }
+  .hero__art {
+    order: -1;
+  }
   .hero__scrim {
     background: linear-gradient(180deg, rgba(7, 27, 51, 0.62) 0%, rgba(7, 27, 51, 0.9) 30%, rgba(7, 27, 51, 0.94) 100%);
   }
@@ -284,6 +290,10 @@ h3 {
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
   aspect-ratio: 16 / 9;
   background: var(--navy-2);
+}
+.hero__art picture {
+  display: block;
+  height: 100%;
 }
 .hero__art img {
   width: 100%;

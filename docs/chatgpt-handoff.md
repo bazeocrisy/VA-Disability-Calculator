@@ -160,7 +160,7 @@ Claude will then:
 
 | # | Item | Owner | How to close |
 |---|---|---|---|
-| 1 | **Hero artwork** — final image of six Black service members, one per branch | You + ChatGPT → Claude reviews | Sections 4–6 above. A Canva draft exists ([open in Canva](https://www.canva.com/M/MAHbRcTK2AA)) but could not be exported at full size or reviewed, so the site shows a labeled placeholder. |
+| 1 | ~~**Hero artwork**~~ — **DONE 2026-11-18.** ChatGPT image installed and reviewed; see `docs/hero-artwork.md` | — | Closed |
 | 2 | **Confirm the 3.6% COLA in a browser** | You | Open https://www.ssa.gov/news/en/press/releases/2026-10-14.html and confirm it says 3.6% for 2027. (SSA blocked Claude's automated download, so Claude verified it from official search results only.) |
 | 3 | **Human accuracy review** | You or a trusted reviewer (ideally a VSO or someone familiar with VA rates) | Spot-check several amounts in the calculator against https://www.va.gov/disability/compensation-rates/veteran-rates/ — e.g. 70% with spouse and 1 child = $2,074.45; 30% with spouse = $617.47. |
 | 4 | **Check the links Claude couldn't open** | You | Click the SSA and Congress.gov links on the site's **Sources** tab and confirm they load (both blocked automated checks; VA.gov and eCFR links were confirmed working). |
@@ -174,7 +174,7 @@ Claude will then:
 | 7 | **Swap in official 2027 rates when VA publishes them** | Usually late November–December. Claude will save the new VA page, load the official table, remove the "PROJECTED" labels, and update tests and docs. |
 | 8 | **Check S. 4487 status** (Veterans' COLA Act of 2026) | https://www.congress.gov/bill/119th-congress/senate-bill/4487 — Claude couldn't confirm whether it was enacted (site blocked automation). |
 | 9 | **Real screen-reader test** | Try the site with iPhone VoiceOver and Android TalkBack. Automated checks passed; real-device testing hasn't been done. |
-| 10 | **Social share image** (optional) | See "Optional extra image" in section 4. Claude will wire up the preview tags. |
+| 10 | ~~**Social share image**~~ | **DONE** — cropped from the hero image (`public/og-image.jpg`) and wired into the page's share tags. A custom version with empty space for text is still optional. |
 
 ### Known limitations (shown honestly on the site — candidates for future features)
 
