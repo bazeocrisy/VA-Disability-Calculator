@@ -12,6 +12,9 @@ export interface Condition {
   side?: Side;
 }
 
+/** Exhaustive § 4.26(d) search limit (2^16 evaluations stays well under 100 ms). */
+export const MAX_BILATERAL_SEARCH = 16;
+
 export interface CombineStep {
   kind: 'combine' | 'bilateral-factor' | 'round' | 'note';
   text: string;
@@ -37,8 +40,8 @@ export function validateConditions(conditions: Condition[]): string[] {
   const errors: string[] = [];
   if (conditions.length > 20) errors.push('Enter at most 20 conditions.');
   conditions.forEach((c, i) => {
-    if (!Number.isInteger(c.rating) || c.rating < 0 || c.rating > 100) {
-      errors.push(`Condition ${i + 1}: rating must be a whole number from 0 to 100.`);
+    if (!Number.isInteger(c.rating) || c.rating < 0 || c.rating > 100 || c.rating % 10 !== 0) {
+      errors.push(`Condition ${i + 1}: rating must be 0% to 100% in steps of 10.`);
     }
     if ((c.extremity && !c.side) || (!c.extremity && c.side)) {
       errors.push(`Condition ${i + 1}: choose both the limb and the side, or neither.`);
@@ -163,10 +166,18 @@ export function calculateCombinedRating(conditions: Condition[]): CombinedResult
   if (errors.length || conditions.length === 0) return empty;
 
   const initialPool = qualifiesForBilateral(conditions) ? bilateralPool(conditions) : [];
+  const n = initialPool.length;
+  if (n > MAX_BILATERAL_SEARCH) {
+    return {
+      ...empty,
+      errors: [
+        `More than ${MAX_BILATERAL_SEARCH} arm and leg conditions qualify for the bilateral factor. This calculator cannot guarantee the most favorable result required by 38 CFR § 4.26(d) for that many, so it will not show a number. VA will calculate your combined rating.`,
+      ],
+    };
+  }
   let best = evaluate(conditions, new Set());
   let bestRemovals = 0;
-  const n = initialPool.length;
-  if (n > 0 && n <= 12) {
+  if (n > 0) {
     for (let mask = 1; mask < 1 << n; mask++) {
       const ids = new Set(initialPool.filter((_, i) => mask & (1 << i)).map((c) => c.id));
       const ev = evaluate(conditions, ids);

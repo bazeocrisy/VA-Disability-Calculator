@@ -98,6 +98,7 @@ describe('§ 4.25(a) combination and rounding', () => {
   it('rejects invalid input', () => {
     expect(calculateCombinedRating([c(110)]).errors.length).toBeGreaterThan(0);
     expect(calculateCombinedRating([c(-10)]).errors.length).toBeGreaterThan(0);
+    expect(calculateCombinedRating([c(15)]).errors.length).toBeGreaterThan(0);
     expect(calculateCombinedRating([{ id: 'x', rating: 10, extremity: 'arm' }]).errors.length).toBeGreaterThan(0);
   });
 });
@@ -169,5 +170,35 @@ describe('§ 4.26 bilateral factor', () => {
           const got = final(c(l, 'arm', 'left'), c(rr, 'arm', 'right'), ...others.map((x) => c(x)));
           expect(got).toBe(Math.max(std, none));
         }
+  });
+  it('§ 4.26(d) still applies with a 13-condition bilateral group (audit finding D1)', () => {
+    // Independent auditor's case: code previously skipped the search above 12 and returned 90%.
+    const cs = [
+      ...[10, 10, 20].map((r) => c(r, 'arm', 'left')),
+      ...[10, 10, 10, 20].map((r) => c(r, 'arm', 'right')),
+      ...[20, 10].map((r) => c(r, 'leg', 'left')),
+      ...[10, 10, 10, 10].map((r) => c(r, 'leg', 'right')),
+      c(20),
+      c(30),
+    ];
+    const t0 = performance.now();
+    const r = calculateCombinedRating(cs);
+    expect(r.errors).toEqual([]);
+    expect(r.finalRating).toBe(100);
+    expect(r.excludedFromBilateral.length).toBeGreaterThan(0);
+    expect(performance.now() - t0).toBeLessThan(2000);
+  });
+  it('refuses (no number) when the bilateral group exceeds the exhaustive-search limit', () => {
+    const cs = Array.from({ length: 17 }, (_, i) => c(10, 'leg', i % 2 ? 'left' : 'right'));
+    const r = calculateCombinedRating(cs);
+    expect(r.errors.length).toBe(1);
+    expect(r.finalRating).toBe(0);
+    expect(r.steps).toEqual([]);
+  });
+  it('16-condition bilateral group completes quickly', () => {
+    const cs = Array.from({ length: 16 }, (_, i) => c(10 + (i % 3) * 10, i < 8 ? 'arm' : 'leg', i % 2 ? 'left' : 'right'));
+    const t0 = performance.now();
+    expect(calculateCombinedRating(cs).errors).toEqual([]);
+    console.log('16-member search ms:', Math.round(performance.now() - t0));
   });
 });

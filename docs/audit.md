@@ -36,9 +36,21 @@ Build audited: branch `claude/veteranpay-calculator`, 2026-11-18. Every item bel
 - Every cell × 1.036, half-up to the cent in integer math; test asserts |projected × 1000 − official × 1036| ≤ 500 for all 120 household cells. Example: 100% alone $3,938.58 → $4,080.37.
 - Projected tables are typed `status: 'projected'`, cannot be re-projected, and display "PROJECTED … not an official VA rate".
 
-### 1f. Independent calculation review
+### 1f. Independent calculation review — 1 defect found and fixed
 
-_Pending — see section 6._
+A separate reviewer agent, given only the code and the saved evidence files, built its own oracles (not the repo's tests):
+
+| Area | Independent result |
+|---|---|
+| Rate cells | 122 / 122 match the VA page |
+| Table I | 684 / 684 match eCFR; formula reproduces every cell |
+| Combined rating fuzz | 200,000 random cases (≤ 7 conditions) match an oracle that tries every § 4.26(d) removal; order-reversal invariant |
+| Household pay | 61,440 combinations (rating × spouse × A&A × parents × 0–15 minors × 0–15 school children) match for 2026 and projected 2027 |
+| Projection / money | all 122 projected cells exact; no floating-point risk |
+
+**Defect D1 (fixed):** the § 4.26(d) subset search was skipped when more than 12 conditions were in the bilateral group, so a 13-condition case returned 90% instead of 100%. Fix: exhaustive search up to 16 bilateral conditions (~0.3 s worst case); above 16 the calculator shows an explicit error and **no number**. Regression tests added (auditor's exact case → 100%; 17-member group → refusal). Validation now also requires ratings in steps of 10.
+
+Concerns noted (not defects), handled as documented limitations: school-child-only households (unsupported, warning shown); "helpless child" over 18 not modeled; paired skeletal muscles other than arms/legs not modeled (UI states this); 2027 projection may differ by cents from VA's published table.
 
 ## 2. Design audit
 
@@ -55,7 +67,7 @@ _Pending — see section 6._
 | Check | Result |
 |---|---|
 | TypeScript (`tsc -b`, strict) | PASS — 0 errors |
-| Automated tests (`vitest run`) | PASS — 58 tests in 4 files |
+| Automated tests (`vitest run`) | PASS — 61 tests in 4 files |
 | Production build (`vite build`) | PASS — JS 187 kB (60 kB gzip), CSS 30 kB (6 kB gzip); fonts self-hosted |
 | GitHub Pages base | PASS — `base: '/VA-Disability-Calculator/'`; CI greps built `index.html` for it |
 | Responsive layout | PASS — 1440×900 desktop and iPhone 13: no horizontal overflow (`scrollWidth ≤ innerWidth`) |
@@ -84,7 +96,7 @@ No forms submit anywhere; no network requests after load (fonts bundled); no coo
 
 | Review | Status |
 |---|---|
-| Independent automated calculation review | _pending_ |
+| Independent automated calculation review | Done — 1 defect (D1) found and fixed; see 1f |
 | Human accuracy review | **Not yet performed** |
 | Hero artwork review | **Not yet performed** (no final asset) |
 
