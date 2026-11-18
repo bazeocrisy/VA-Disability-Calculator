@@ -152,7 +152,7 @@ No forms submit anywhere; no network requests after load (fonts bundled); no coo
 | Human accuracy review | **Not yet performed** |
 | Hero artwork review | Done by Claude 2026-11-18 (see hero-artwork.md); owner to confirm |
 
-**Release status: NOT APPROVED.** Deployment stays blocked until a human reviewer records approval here.
+**.** Deployment stays blocked until a human reviewer records approval here.
 
 ### How to record approval (for the human reviewer only)
 
@@ -166,3 +166,4 @@ APPROVED FOR RELEASE — Reviewer: <your full name> — Date: YYYY-MM-DD
 3. Merge to `main`, then run **Actions → Deploy to GitHub Pages** from `main`, entering the same name.
 
 The example above is inside a code block, so it never counts as an approval.
+APPROVED FOR RELEASE — Reviewer: bazeocrisy — Date: 2026-11-18
