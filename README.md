@@ -3,7 +3,7 @@
 Independent, privacy-first VA compensation and combined-rating calculator. **Under development — do not use for benefit decisions.**
 
 ## Claude Code handoff
-Read [CLAUDE.md](CLAUDE.md) before writing code. Implement React + TypeScript + Vite with tests. The repo name is **VA-Disability-Calculater** (as created), so the GitHub Pages base path must be `/VA-Disability-Calculater/`.
+Read [CLAUDE.md](CLAUDE.md) before writing code. Implement React + TypeScript + Vite with tests. The repo name is **VA-Disability-Calculator**, so the GitHub Pages base path must be `/VA-Disability-Calculator/`.
 
 ## Source of truth
 - https://www.va.gov/disability/compensation-rates/veteran-rates/
