@@ -1,0 +1,66 @@
+{
+ "desktop": {
+  "consoleErrorsOrWarnings": [],
+  "overflow": false,
+  "totalsShownWithAdultChild": 0,
+  "sourcesHasMultiplier": true,
+  "axe": {
+   "home": {
+    "violations": [],
+    "passes": 33
+   },
+   "quickPay": {
+    "violations": [],
+    "passes": 33
+   },
+   "adultChildWarning": {
+    "violations": [],
+    "passes": 30
+   },
+   "combined": {
+    "violations": [],
+    "passes": 32
+   },
+   "howItWorks": {
+    "violations": [],
+    "passes": 30
+   },
+   "sources": {
+    "violations": [],
+    "passes": 28
+   }
+  }
+ },
+ "mobile": {
+  "consoleErrorsOrWarnings": [],
+  "overflow": false,
+  "totalsShownWithAdultChild": 0,
+  "sourcesHasMultiplier": true,
+  "axe": {
+   "home": {
+    "violations": [],
+    "passes": 31
+   },
+   "quickPay": {
+    "violations": [],
+    "passes": 31
+   },
+   "adultChildWarning": {
+    "violations": [],
+    "passes": 30
+   },
+   "combined": {
+    "violations": [],
+    "passes": 32
+   },
+   "howItWorks": {
+    "violations": [],
+    "passes": 28
+   },
+   "sources": {
+    "violations": [],
+    "passes": 28
+   }
+  }
+ }
+}
