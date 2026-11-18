@@ -65,6 +65,22 @@ Reported by the owner: 61 tests and production build pass; all nine live VA tabl
 | 4 | React `fetchPriority` warning in tests | Lowercase `fetchpriority="high"` attribute | `ui.test.tsx` asserts zero console errors/warnings across all tabs and the attribute is present |
 | 5 | SSA check | Recorded in 1e and rate-sources.md | — |
 
+### 1i. Third independent review (commit f56e161) — approval-gate defect fixed
+
+Reviewer confirmed 80 tests, typecheck, production build and GitHub CI pass, and found one defect: `checkReleaseApproval` accepted an approval record indented by four spaces (which Markdown renders as an indented code block, i.e. an example). Cause: the line was whitespace-normalized before matching.
+
+Fix (`scripts/release-approval.mjs`): every approval-like line is validated **raw**. A line starting with a space, tab or non-breaking space is rejected as indented; the raw line must match the exact format (no extra internal or trailing whitespace; CRLF line endings tolerated). An indented example anywhere in the file blocks release even if a genuine record is also present.
+
+Regression checks (`src/test/release-approval.test.ts`, now 17 tests):
+- 4-space, tab, 8-space, mixed, 1–3-space, non-breaking-space and list-nested indented records cannot authorize release;
+- an indented example next to a genuine record still blocks;
+- irregular internal/trailing whitespace is rejected;
+- a genuine standalone record still passes (LF and CRLF);
+- the current `docs/audit.md` is blocked for any reviewer name and contains no approval-format line outside code fences;
+- following the documented approval procedure on the real `audit.md` yields a valid approval (the document's own prose cannot self-block), while the same record indented does not.
+
+Mutation check: the three new indentation/whitespace tests **fail against the f56e161 checker** and pass with the fix. CLI check: 4-space and tab-indented files exit 1 with "Approval line is indented"; a standalone record exits 0; the current audit exits 1.
+
 ### 1h. VA-recognized permanently incapable adult child
 
 Not priced (no verified VA rate rule captured in evidence yet). The calculator collects only a yes/no and shows no total at 30–100%. Future support requires citing the official VA rule and adding tests.
@@ -84,7 +100,7 @@ Not priced (no verified VA rate rule captured in evidence yet). The calculator c
 | Check | Result |
 |---|---|
 | TypeScript (`tsc -b`, strict) | PASS — 0 errors |
-| Automated tests (`vitest run`) | PASS — 80 tests in 5 files; 0 React/console warnings |
+| Automated tests (`vitest run`) | PASS — 85 tests in 5 files; 0 React/console warnings |
 | Production build (`vite build`) | PASS — JS 187 kB (60 kB gzip), CSS 30 kB (6 kB gzip); fonts self-hosted |
 | GitHub Pages base | PASS — `base: '/VA-Disability-Calculator/'`; CI greps built `index.html` for it |
 | Responsive layout | PASS — 1440×900 desktop and iPhone 13: no horizontal overflow (`scrollWidth ≤ innerWidth`) |
@@ -122,7 +138,7 @@ No forms submit anywhere; no network requests after load (fonts bundled); no coo
 ### How to record approval (for the human reviewer only)
 
 1. Delete the "Release status: NOT APPROVED" line above (the gate rejects any negated approval text).
-2. Add exactly one line, on its own, outside any code block, in this exact form:
+2. Add exactly one line, on its own, **not indented** (no leading spaces or tabs), outside any code block, in this exact form:
 
 ```text
 APPROVED FOR RELEASE — Reviewer: <your full name> — Date: YYYY-MM-DD

@@ -2,12 +2,14 @@
 /**
  * Release-approval gate for .github/workflows/deploy.yml.
  *
- * docs/audit.md must contain EXACTLY ONE approval record, on its own line, outside code blocks:
+ * docs/audit.md must contain EXACTLY ONE approval record, on its own unindented line, outside code
+ * blocks. The raw line must match exactly (only a CRLF line ending is tolerated):
  *
  *   APPROVED FOR RELEASE — Reviewer: Jane Q. Doe — Date: 2026-12-01
  *
  * Rejected: missing record; more than one record; any other line mentioning
- * "APPROVED FOR RELEASE" (quoted, struck through, prefixed, reworded); any negation such as
+ * "APPROVED FOR RELEASE" (indented — e.g. a 4-space or tab-indented Markdown code block —, quoted,
+ * struck through, prefixed, reworded, irregular spacing); any negation such as
  * "NOT APPROVED" or a revoked/withdrawn/rescinded approval; placeholder or example names;
  * invalid or future dates; a reviewer name that does not exactly match the one supplied to the
  * workflow. Example records inside fenced code blocks and HTML comments are ignored.
@@ -70,9 +72,21 @@ export function checkReleaseApproval(markdown, reviewer, today = new Date().toIS
   const records = [];
   for (const raw of lines) {
     if (!/approved for release/i.test(raw)) continue;
-    const m = RECORD.exec(normalize(raw));
+    // Validate the RAW line — never normalize first. Markdown renders a line indented by
+    // 4+ spaces or a tab as code, and any indentation can nest it in a list or quote, so an
+    // indented record is only an example and must never authorize a release.
+    if (/^[ \t\u00a0]/.test(raw)) {
+      return {
+        ok: false,
+        reason: `Approval line is indented (Markdown may render it as a code block or nested text): "${raw.trim()}"`,
+      };
+    }
+    const m = RECORD.exec(raw);
     if (!m) return { ok: false, reason: `Malformed approval line (must match the exact format): "${raw.trim()}"` };
-    records.push({ name: normalize(m[1]), date: m[2] });
+    if (m[1] !== normalize(m[1])) {
+      return { ok: false, reason: `Approval line has irregular spacing in the reviewer name: "${raw}"` };
+    }
+    records.push({ name: m[1], date: m[2] });
   }
 
   if (records.length === 0) return { ok: false, reason: 'No approval record found in docs/audit.md.' };
