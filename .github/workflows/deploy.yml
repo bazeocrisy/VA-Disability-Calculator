@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+# Release gate (CLAUDE.md): deployment is MANUAL ONLY. Run it after docs/audit.md records
+# human reviewer approval. It never runs automatically on push.
+on:
+  workflow_dispatch:
+    inputs:
+      reviewer_approval:
+        description: 'Type the reviewer name recorded as approving in docs/audit.md'
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require recorded approval
+        env:
+          REVIEWER: ${{ inputs.reviewer_approval }}
+        run: |
+          grep -q "APPROVED FOR RELEASE" docs/audit.md || { echo "docs/audit.md has no release approval"; exit 1; }
+          grep -qF "$REVIEWER" docs/audit.md || { echo "Reviewer not recorded in docs/audit.md"; exit 1; }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
