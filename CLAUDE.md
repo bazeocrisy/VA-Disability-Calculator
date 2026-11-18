@@ -1,6 +1,6 @@
 # Claude Code — VA Disability Calculator
 
-Implement a public, accessible, privacy-preserving VA compensation calculator in this repository: **bazeocrisy/VA-Disability-Calculater**.
+Implement a public, accessible, privacy-preserving VA compensation calculator in this repository: **bazeocrisy/VA-Disability-Calculator**.
 
 ## Mandatory correctness
 1. Retrieve all official 2026 VA compensation tables directly from https://www.va.gov/disability/compensation-rates/veteran-rates/ . Record URLs, effective dates, retrieval date, and cell coverage in docs/rate-sources.md. Never invent missing rates.
@@ -14,7 +14,7 @@ Implement a public, accessible, privacy-preserving VA compensation calculator in
 ## Build
 React + TypeScript + Vite + Vitest; accessible, responsive mobile-first design. Tabs: Quick Pay, Combined Rating, How It Works, Sources. Quick Pay compares official 2026 and projected 2027 monthly/annual compensation and COLA differences with an itemized breakdown. Combined Rating supports condition percentages, bilateral side/type and transparent calculation steps.
 
-IMPORTANT: The actual repository is spelled **Calculater**. GitHub Pages Vite base must be `/VA-Disability-Calculater/`, not Calculator.
+GitHub Pages Vite base must be `/VA-Disability-Calculator/`, not Calculator.
 
 ## Workflow and release gate
 Start with implementation plan and complete rate coverage matrix. Create a feature branch and PR. Automated CI must run tests/build. Test every populated official rate-table cell and dependent permutation, 10/20% dependent invariance, 50+30+20 => 70, ordering invariance, bilateral edge cases, unsupported cases, rounding boundaries, and projection labels. Record evidence in docs/audit.md. **Do not publish a calculator with unverified rates.** Deploy with GitHub Actions only after verification and review. Clearly state independent, not affiliated with VA.
