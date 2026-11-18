@@ -66,7 +66,8 @@ export function Hero({ onCompensation, onCombined }: Props) {
                 alt={art.alt}
                 width={art.width}
                 height={art.height}
-                fetchPriority="high"
+                // React 18 does not know the camelCase prop; the lowercase HTML attribute is passed through as-is.
+                {...{ fetchpriority: 'high' }}
                 decoding="async"
               />
             </picture>

@@ -16,7 +16,7 @@ function describe(label: string, r: CompensationResult): string[] {
 export function buildSummary(h: Household, r2026: CompensationResult, r2027: CompensationResult): string {
   const lines = [
     'VeteranPay — VA compensation estimate',
-    `Rating: ${h.rating}% · Spouse: ${h.hasSpouse ? 'yes' : 'no'}${h.spouseAidAndAttendance ? ' (Aid and Attendance)' : ''} · Children under 18: ${h.childrenUnder18} · Children 18–23 in school: ${h.schoolChildren} · Dependent parents: ${h.dependentParents}`,
+    `Rating: ${h.rating}% · Spouse: ${h.hasSpouse ? 'yes' : 'no'}${h.spouseAidAndAttendance ? ' (Aid and Attendance)' : ''} · Children under 18: ${h.childrenUnder18} · Children 18–23 in school: ${h.schoolChildren} · Dependent parents: ${h.dependentParents}${h.permanentlyIncapableAdultChild ? ' · Adult child recognized by VA as permanently incapable of self-support: yes' : ''}`,
     '',
     ...describe('2026 OFFICIAL (effective Dec 1, 2025)', r2026),
     ...describe('2027 PROJECTED (not an official VA rate)', r2027),

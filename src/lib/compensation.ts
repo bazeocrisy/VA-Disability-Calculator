@@ -14,6 +14,12 @@ export interface Household {
   schoolChildren: number;
   /** User-declared special situations. We never infer eligibility for these. */
   receivesSMC?: boolean;
+  /**
+   * VA has recognized a child age 18 or older as permanently incapable of self-support
+   * (often called a "helpless child"). Yes/no only — no medical details are collected.
+   * Not yet priced: totals at 30%+ are suppressed with an explicit warning.
+   */
+  permanentlyIncapableAdultChild?: boolean;
 }
 
 export interface LineItem {
@@ -114,6 +120,11 @@ export function calculateCompensation(h: Household, table: RateTable): Compensat
   if (h.rating === 10 || h.rating === 20) {
     if (reasons.length) return { kind: 'unsupported', year: table.year, reasons };
     const cents = table.low[h.rating];
+    if (h.permanentlyIncapableAdultChild) {
+      notes.push(
+        'At 10% and 20%, VA does not pay more for any dependent, including an adult child VA has recognized as permanently incapable of self-support, so this total is complete.',
+      );
+    }
     if (hasDependents) {
       notes.push(
         'At 10% and 20%, VA does not pay additional compensation for a spouse, children, or parents.',
@@ -130,6 +141,11 @@ export function calculateCompensation(h: Household, table: RateTable): Compensat
     };
   }
 
+  if (h.permanentlyIncapableAdultChild) {
+    reasons.push(
+      'You indicated VA has recognized a child age 18 or older as permanently incapable of self-support. This calculator does not yet include that dependent status, so it will not show a total that could leave that child out. VA will calculate your exact amount; you can also call VA at 800-827-1000.',
+    );
+  }
   const totalChildren = h.childrenUnder18 + h.schoolChildren;
   if (totalChildren > 0 && h.childrenUnder18 === 0) {
     reasons.push(

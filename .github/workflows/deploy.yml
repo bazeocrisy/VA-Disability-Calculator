@@ -1,18 +1,23 @@
 name: Deploy to GitHub Pages
 
-# Release gate (CLAUDE.md): deployment is MANUAL ONLY. Run it after docs/audit.md records
-# human reviewer approval. It never runs automatically on push.
+# Release gate (CLAUDE.md): deployment is MANUAL ONLY, from `main` only, and only when
+# docs/audit.md contains exactly one valid approval record naming the reviewer entered here:
+#
+#   APPROVED FOR RELEASE — Reviewer: <full name> — Date: YYYY-MM-DD
+#
+# The rules are enforced by scripts/release-approval.mjs (unit-tested in
+# src/test/release-approval.test.ts). For a second, human gate, add required reviewers to the
+# `github-pages` environment in Settings → Environments.
 on:
   workflow_dispatch:
     inputs:
-      reviewer_approval:
-        description: 'Type the reviewer name recorded as approving in docs/audit.md'
+      reviewer:
+        description: 'Reviewer name exactly as written in the docs/audit.md approval record'
         required: true
+        type: string
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
@@ -22,17 +27,21 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Require recorded approval
-        env:
-          REVIEWER: ${{ inputs.reviewer_approval }}
+      - name: Require the main branch
         run: |
-          grep -q "APPROVED FOR RELEASE" docs/audit.md || { echo "docs/audit.md has no release approval"; exit 1; }
-          grep -qF "$REVIEWER" docs/audit.md || { echo "Reviewer not recorded in docs/audit.md"; exit 1; }
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::Production deploys must run from main (this run is on $GITHUB_REF)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: Require a matching release approval
+        env:
+          REVIEWER: ${{ inputs.reviewer }}
+        run: node scripts/release-approval.mjs docs/audit.md "$REVIEWER"
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
@@ -40,9 +49,14 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
+
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

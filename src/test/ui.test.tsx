@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import App from '../App';
 import { FLAG_GEOMETRY, FLAG_STAR_COUNT } from '../components/AmericanFlag';
@@ -64,6 +64,42 @@ describe('App', () => {
     fireEvent.click(screen.getByLabelText(/Special Monthly Compensation/));
     expect(screen.getAllByText('No estimate shown.').length).toBe(2);
     expect(screen.queryByText('$1,808.45')).toBeNull();
+  });
+
+  it('adult child permanently incapable of self-support: yes/no control, warning, no totals', () => {
+    render(<App />);
+    const box = screen.getByLabelText(/permanently incapable of self-support/);
+    expect((box as HTMLInputElement).type).toBe('checkbox');
+    fireEvent.click(box);
+    expect(screen.getAllByText('No estimate shown.').length).toBe(2);
+    expect(screen.queryByText('$1,808.45')).toBeNull();
+    expect(screen.queryByText(/COLA difference/)).toBeNull();
+    expect(screen.getAllByText(/does not yet include that dependent status/).length).toBe(2);
+    expect(screen.getByText(/never ask for medical details/)).toBeTruthy();
+    // no free-text or medical fields exist anywhere in the calculator
+    expect(document.querySelectorAll('textarea, input[type="text"], input[type="file"], input[type="date"]').length).toBe(0);
+  });
+
+  it('Sources explains the projection as 2026 rates × 1.036 (a 3.6% increase)', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Sources' }));
+    const verify = document.querySelector('.verify-grid')!.textContent!.replace(/\s+/g, ' ');
+    expect(verify).toContain('2026 rates × 1.036 (a 3.6% increase)');
+    expect(verify).not.toMatch(/× 3\.6%/);
+  });
+
+  it('renders without React warnings (incl. fetchpriority) and sets the hero image priority attribute', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { container } = render(<App />);
+    for (const t of ['Combined Rating', 'How It Works', 'Sources', 'Quick Pay']) {
+      fireEvent.click(screen.getByRole('tab', { name: t }));
+    }
+    const calls = [...spy.mock.calls, ...warn.mock.calls].map((c) => String(c[0]));
+    spy.mockRestore();
+    warn.mockRestore();
+    expect(calls).toEqual([]);
+    expect(container.querySelector('.hero__art img')!.getAttribute('fetchpriority')).toBe('high');
   });
 
   it('tabs: keyboard arrows move between sections', () => {

@@ -2,7 +2,7 @@
 
 > **Purpose:** Give this whole file to ChatGPT to brainstorm with and to produce the hero artwork.
 > It has the project context, current status, the image prompt, upload steps, the review checklist, and **every open item**.
-> Last updated: November 18, 2026.
+> Last updated: November 18, 2026 (after second independent review of commit 53109e8).
 
 ---
 
@@ -53,7 +53,7 @@
 ### Verified numbers (for reference — do not change them)
 - 2026 rates are effective **December 1, 2025** (VA.gov page last updated November 2, 2026).
 - Examples: 10% = **$180.42**, 20% = **$356.66**, 30% alone = **$552.47**, 70% alone = **$1,808.45**, 100% alone = **$3,938.58**.
-- Social Security announced a **3.6% COLA for 2027** on **October 14, 2026**. VA says it is required by law to match it.
+- Social Security announced a **3.6% COLA for 2027** on **October 14, 2026** (confirmed directly on SSA's announcement). VA says it is required by law to match it. 2027 projections = 2026 rates × 1.036.
 - **VA has not yet published official 2027 tables**, so every 2027 number on the site is labeled **PROJECTED**.
 
 ---
@@ -161,11 +161,11 @@ Claude will then:
 | # | Item | Owner | How to close |
 |---|---|---|---|
 | 1 | ~~**Hero artwork**~~ — **DONE 2026-11-18.** ChatGPT image installed and reviewed; see `docs/hero-artwork.md` | — | Closed |
-| 2 | **Confirm the 3.6% COLA in a browser** | You | Open https://www.ssa.gov/news/en/press/releases/2026-10-14.html and confirm it says 3.6% for 2027. (SSA blocked Claude's automated download, so Claude verified it from official search results only.) |
+| 2 | ~~**Confirm the 3.6% COLA**~~ — **DONE 2026-11-18.** SSA's official announcement was checked directly and confirms 3.6% | — | Closed |
 | 3 | **Human accuracy review** | You or a trusted reviewer (ideally a VSO or someone familiar with VA rates) | Spot-check several amounts in the calculator against https://www.va.gov/disability/compensation-rates/veteran-rates/ — e.g. 70% with spouse and 1 child = $2,074.45; 30% with spouse = $617.47. |
 | 4 | **Check the links Claude couldn't open** | You | Click the SSA and Congress.gov links on the site's **Sources** tab and confirm they load (both blocked automated checks; VA.gov and eCFR links were confirmed working). |
-| 5 | **Record approval** | You | Add a line to `docs/audit.md`: `APPROVED FOR RELEASE — <your name>, <date>`. The deploy workflow refuses to run without it. |
-| 6 | **Turn on GitHub Pages and deploy** | You (Claude can guide) | Repo **Settings → Pages → Source: GitHub Actions**. Merge the PR, then **Actions → "Deploy to GitHub Pages" → Run workflow**, entering the reviewer name. |
+| 5 | **Record approval** | You | In `docs/audit.md`, delete the "Release status: NOT APPROVED" line and add one line in exactly this form: `APPROVED FOR RELEASE — Reviewer: <your full name> — Date: YYYY-MM-DD`. The deploy workflow checks it strictly (one record, real name, valid date, must match the name you type when running the deploy). |
+| 6 | **Turn on GitHub Pages and deploy** | You (Claude can guide) | Repo **Settings → Pages → Source: GitHub Actions**. Merge the PR into `main`, then **Actions → "Deploy to GitHub Pages" → Run workflow** from `main`, entering your name exactly as in the approval line. Optional extra gate: **Settings → Environments → github-pages → Required reviewers**. |
 
 ### Recommended soon after launch
 
@@ -182,7 +182,7 @@ Claude will then:
 |---|---|---|
 | Special Monthly Compensation (SMC) | Warning, no number | Load VA's official SMC tables and add SMC level selection |
 | All children are 18–23 and in school (none under 18) | Warning, no number | An official VA statement on how to price this case; VA's rate page doesn't say |
-| "Helpless child" (over 18, permanently unable to self-support) | Not modeled | Official VA guidance, plus a separate input |
+| Adult child VA recognized as permanently incapable of self-support ("helpless child") | Yes/no control; warning and **no totals** at 30–100% (complete total at 10/20%, where dependents never count) | The official VA rate rule for this child, cited from VA.gov, plus tests |
 | Bilateral factor for paired muscles other than arms/legs | Not modeled | More detailed body-location inputs |
 | Amputation rule (38 CFR 4.68) | Not modeled | Body-part grouping logic |
 | More than 16 arm/leg conditions in the bilateral group | Explicit "can't calculate" message | Faster search algorithm |

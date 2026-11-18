@@ -21,7 +21,7 @@ Independent, privacy-first VA compensation and combined-rating calculator.
 | Logic | `src/lib/*.ts` | No rates in logic; unsupported cases return warnings, never numbers |
 
 Money is integer cents. Annual = monthly × 12. The only rounding is the 2027 projection (half-up to the cent).
-Never inferred: TDIU, SMC. Unsupported (explicit warning): SMC amounts; households whose only children are 18–23 school children.
+Never inferred: TDIU, SMC. Unsupported (explicit warning, no totals): SMC amounts; households whose only children are 18–23 school children; an adult child VA recognized as permanently incapable of self-support (at 30%+).
 
 Evidence: [docs/rate-sources.md](docs/rate-sources.md) · [docs/audit.md](docs/audit.md) · [docs/evidence/](docs/evidence/) · hero art status: [docs/hero-artwork.md](docs/hero-artwork.md)
 
@@ -39,7 +39,7 @@ React 18 + TypeScript + Vite + Vitest. Fonts are self-hosted (no third-party req
 
 ## Deploy
 
-`.github/workflows/deploy.yml` is **manual only** and refuses to run unless `docs/audit.md` contains a recorded `APPROVED FOR RELEASE` entry naming the reviewer. Enable GitHub Pages → Source: GitHub Actions.
+`.github/workflows/deploy.yml` is **manual only**, runs only from `main`, and refuses to deploy unless `docs/audit.md` contains exactly one valid approval record matching the reviewer name entered (rules in `scripts/release-approval.mjs`; format in `docs/audit.md`). Enable GitHub Pages → Source: GitHub Actions.
 
 ## Updating rates each year
 

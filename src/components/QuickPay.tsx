@@ -4,7 +4,7 @@ import { COLA_2027 } from '../data/cola';
 import { PAYABLE_RATINGS, type PayableRating } from '../data/types';
 import { calculateCompensation, MAX_CHILDREN, type CompensationResult, type Household } from '../lib/compensation';
 import { projectRateTable } from '../lib/projection';
-import { formatCents, formatSignedCents } from '../lib/money';
+import { formatCents, formatMultiplier, formatPercentFromBasisPoints, formatSignedCents } from '../lib/money';
 import { buildSummary } from '../lib/summary';
 
 export const RATES_2027_PROJECTED = projectRateTable(RATES_2026, COLA_2027);
@@ -17,6 +17,7 @@ export const DEFAULT_HOUSEHOLD: Household = {
   childrenUnder18: 0,
   schoolChildren: 0,
   receivesSMC: false,
+  permanentlyIncapableAdultChild: false,
 };
 
 interface Props {
@@ -97,7 +98,7 @@ function ResultCard({ result, kind }: { result: CompensationResult; kind: 'offic
       <p className="result-card__meta">
         {kind === 'official'
           ? 'Effective Dec 1, 2025 · VA.gov table verified Nov 18, 2026'
-          : `Estimate: 2026 rates + ${(COLA_2027.basisPoints / 100).toFixed(1)}% COLA · effective Dec 1, 2026 · not an official VA rate`}
+          : `Estimate: 2026 rates × ${formatMultiplier(COLA_2027.basisPoints)} (a ${formatPercentFromBasisPoints(COLA_2027.basisPoints)} increase) · effective Dec 1, 2026 · not an official VA rate`}
       </p>
       {result.kind === 'ok' ? (
         <>
@@ -286,6 +287,17 @@ export function QuickPay({ household: h, onChange }: Props) {
             <input type="checkbox" checked={!!h.receivesSMC} onChange={(e) => set({ receivesSMC: e.target.checked })} />
             <span>VA has awarded me Special Monthly Compensation (SMC)</span>
           </label>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={!!h.permanentlyIncapableAdultChild}
+              onChange={(e) => set({ permanentlyIncapableAdultChild: e.target.checked })}
+            />
+            <span>
+              VA has recognized one of my children, age 18 or older, as <strong>permanently incapable of self-support</strong>
+            </span>
+          </label>
+          <p className="field__hint">Just yes or no — we never ask for medical details.</p>
           <p className="field__hint">
             <strong>TDIU:</strong> if VA has granted Total Disability based on Individual Unemployability, VA pays at the
             100% rate — select 100% only if VA has granted it. This calculator never assumes TDIU or SMC.
@@ -328,7 +340,7 @@ export function QuickPay({ household: h, onChange }: Props) {
               </div>
               <div>
                 <dt>COLA used</dt>
-                <dd>{(COLA_2027.basisPoints / 100).toFixed(1)}%</dd>
+                <dd>{formatPercentFromBasisPoints(COLA_2027.basisPoints)}</dd>
               </div>
             </dl>
           </article>
@@ -344,7 +356,7 @@ export function QuickPay({ household: h, onChange }: Props) {
 
         <div className="projection-note" role="note">
           <strong>About 2027 figures:</strong> The Social Security Administration announced a{' '}
-          {(COLA_2027.basisPoints / 100).toFixed(1)}% cost-of-living adjustment on October 14, 2026. VA is required by law
+          {formatPercentFromBasisPoints(COLA_2027.basisPoints)} cost-of-living adjustment on October 14, 2026. VA is required by law
           to match it, but as of {COLA_2027.lastVerified} VA had not yet published its 2027 rate tables. 2027 amounts are{' '}
           <strong>projections</strong>, not official VA rates, and may differ slightly from what VA publishes.
         </div>

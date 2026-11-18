@@ -41,3 +41,18 @@ export function formatCents(cents: Cents): string {
 export function formatSignedCents(cents: Cents): string {
   return (cents > 0 ? '+' : '') + formatCents(cents);
 }
+
+/** 360 basis points → "1.036"; 25 → "1.0025". Exact decimal string, no floating point. */
+export function formatMultiplier(basisPoints: number): string {
+  if (!Number.isInteger(basisPoints) || basisPoints < 0) throw new Error('basisPoints must be a non-negative integer');
+  const whole = 1 + Math.floor(basisPoints / 10000);
+  const frac = String(basisPoints % 10000).padStart(4, '0').replace(/0+$/, '');
+  return frac ? `${whole}.${frac}` : `${whole}`;
+}
+
+/** 360 basis points → "3.6%". */
+export function formatPercentFromBasisPoints(basisPoints: number): string {
+  const whole = Math.floor(basisPoints / 100);
+  const frac = String(basisPoints % 100).padStart(2, '0').replace(/0+$/, '');
+  return `${whole}${frac ? '.' + frac : ''}%`;
+}

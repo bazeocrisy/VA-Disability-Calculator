@@ -32,7 +32,8 @@ Build audited: branch `claude/veteranpay-calculator`, 2026-11-18. Every item bel
 
 ### 1e. COLA projection — PASS (projection, not official)
 
-- SSA 3.6% COLA (announced 2026-10-14) — see [rate-sources.md](rate-sources.md) for how verified and the limitation (ssa.gov blocked direct download from the build container).
+- SSA 3.6% COLA (announced 2026-10-14). **Directly checked on SSA's official announcement** (https://www.ssa.gov/news/en/press/releases/2026-10-14.html) by the owner's independent reviewer (ChatGPT) on 2026-11-18: confirms 3.6%. The build container itself is still blocked by ssa.gov (HTTP 403), so no byte snapshot is stored. See [rate-sources.md](rate-sources.md).
+- The UI states the projection as "2026 rates × 1.036 (a 3.6% increase)" (multiplier formatted from integer basis points; regression-tested).
 - Every cell × 1.036, half-up to the cent in integer math; test asserts |projected × 1000 − official × 1036| ≤ 500 for all 120 household cells. Example: 100% alone $3,938.58 → $4,080.37.
 - Projected tables are typed `status: 'projected'`, cannot be re-projected, and display "PROJECTED … not an official VA rate".
 
@@ -50,7 +51,23 @@ A separate reviewer agent, given only the code and the saved evidence files, bui
 
 **Defect D1 (fixed):** the § 4.26(d) subset search was skipped when more than 12 conditions were in the bilateral group, so a 13-condition case returned 90% instead of 100%. Fix: exhaustive search up to 16 bilateral conditions (~0.3 s worst case); above 16 the calculator shows an explicit error and **no number**. Regression tests added (auditor's exact case → 100%; 17-member group → refusal). Validation now also requires ratings in steps of 10.
 
-Concerns noted (not defects), handled as documented limitations: school-child-only households (unsupported, warning shown); "helpless child" over 18 not modeled; paired skeletal muscles other than arms/legs not modeled (UI states this); 2027 projection may differ by cents from VA's published table.
+Concerns noted (not defects), handled as documented limitations: school-child-only households (unsupported, warning shown); adult child permanently incapable of self-support ("helpless child") — now an explicit yes/no control that suppresses totals at 30%+ (see 1h); paired skeletal muscles other than arms/legs not modeled (UI states this); 2027 projection may differ by cents from VA's published table.
+
+### 1g. Second independent review (ChatGPT, commit 53109e8) — corrections applied
+
+Reported by the owner: 61 tests and production build pass; all nine live VA tables match the saved evidence; 10,000 additional combined-rating checks matched. Required corrections and how each was closed:
+
+| # | Correction | Resolution | Regression check |
+|---|---|---|---|
+| 1 | Sources said "2026 rates × 3.6%" | Now "2026 rates × 1.036 (a 3.6% increase)"; Quick Pay card uses the same wording | `ui.test.tsx` Sources wording; `compensation.test.ts` multiplier formatting |
+| 2 | No control for a VA-recognized permanently disabled adult child | Yes/no checkbox (no medical details). At 30–100% both 2026 and 2027 totals, the COLA difference and the breakdown are suppressed with an explicit warning. At 10%/20% the total is complete (VA: dependents never change these rates) and a note says so | `compensation.test.ts` (8 ratings × 4 households × 2 years; 10/20%); `ui.test.tsx` (warning, no totals, no text/file/date inputs) |
+| 3 | Deploy gate too weak | `deploy.yml` fails unless run from `main`; deploy job also conditioned on `main`; `scripts/release-approval.mjs` requires exactly one exact-format record matching the supplied reviewer; rejects missing, negated, example/placeholder, quoted/struck/reworded, duplicate, mismatched, invalid/future-dated approvals | `release-approval.test.ts` (12 tests incl. workflow structure and "audit.md is not currently approved") |
+| 4 | React `fetchPriority` warning in tests | Lowercase `fetchpriority="high"` attribute | `ui.test.tsx` asserts zero console errors/warnings across all tabs and the attribute is present |
+| 5 | SSA check | Recorded in 1e and rate-sources.md | — |
+
+### 1h. VA-recognized permanently incapable adult child
+
+Not priced (no verified VA rate rule captured in evidence yet). The calculator collects only a yes/no and shows no total at 30–100%. Future support requires citing the official VA rule and adding tests.
 
 ## 2. Design audit
 
@@ -67,20 +84,20 @@ Concerns noted (not defects), handled as documented limitations: school-child-on
 | Check | Result |
 |---|---|
 | TypeScript (`tsc -b`, strict) | PASS — 0 errors |
-| Automated tests (`vitest run`) | PASS — 61 tests in 4 files |
+| Automated tests (`vitest run`) | PASS — 80 tests in 5 files; 0 React/console warnings |
 | Production build (`vite build`) | PASS — JS 187 kB (60 kB gzip), CSS 30 kB (6 kB gzip); fonts self-hosted |
 | GitHub Pages base | PASS — `base: '/VA-Disability-Calculator/'`; CI greps built `index.html` for it |
 | Responsive layout | PASS — 1440×900 desktop and iPhone 13: no horizontal overflow (`scrollWidth ≤ innerWidth`) |
-| Console errors | PASS — 0 console errors / page errors on both viewports while exercising both calculators |
-| Outbound links | va.gov ×4: HTTP 200. eCFR ×2: HTTP 302 (normal redirect). ssa.gov ×2 and congress.gov ×1: HTTP 403 bot-protection from the build container (Akamai "Access Denied" / Cloudflare challenge) — URLs confirmed in official search results; **re-check in a browser before release** |
+| Console errors | PASS — 0 console errors, warnings or page errors on both viewports across all tabs and the adult-child warning state |
+| Outbound links | va.gov ×4: HTTP 200. eCFR ×2: HTTP 302 (normal redirect). ssa.gov ×2 and congress.gov ×1: HTTP 403 bot-protection from the build container (the SSA announcement was since checked directly by the owner's reviewer) (Akamai "Access Denied" / Cloudflare challenge) — URLs confirmed in official search results; **re-check in a browser before release** |
 | CI | `.github/workflows/ci.yml`: npm ci, typecheck, test, build, base-path check |
-| Deployment | `.github/workflows/deploy.yml`: manual only; refuses to run unless this file contains a recorded release approval |
+| Deployment | `.github/workflows/deploy.yml`: manual only; `main` only; `scripts/release-approval.mjs` must find exactly one valid approval record matching the reviewer entered when running the workflow |
 
 ## 4. Accessibility audit (WCAG 2.2 AA-oriented)
 
 | Check | Result |
 |---|---|
-| axe-core 4.10 (tags wcag2a, 2aa, 21a, 21aa, 22aa) | **0 violations** on Quick Pay and Combined Rating, desktop and mobile |
+| axe-core 4.10 (tags wcag2a, 2aa, 21a, 21aa, 22aa) | **0 violations** in 12 scanned states — Home, Quick Pay, adult-child warning, Combined Rating, How It Works, Sources × desktop (1440×900) and mobile (iPhone 13). Raw output: [`evidence/ui-a11y-evidence-2026-11-18.json`](evidence/ui-a11y-evidence-2026-11-18.json); screenshots in `docs/screenshots/` incl. `*-adult-child-warning.png` |
 | Keyboard | Skip link → nav → hero CTAs → tablist → form controls in logical order; tabs support ←/→/Home/End with roving tabindex; CTAs move focus to the selected tab; condition add/remove moves focus sensibly |
 | Screen readers | Native fieldsets/legends and labels on every control; results announced via polite live region; tables have captions and header scope; decorative flag `aria-hidden`; placeholder art has descriptive `role="img"` label |
 | Targets | All interactive targets ≥ 44 px (buttons 48–56 px) |
@@ -101,3 +118,16 @@ No forms submit anywhere; no network requests after load (fonts bundled); no coo
 | Hero artwork review | Done by Claude 2026-11-18 (see hero-artwork.md); owner to confirm |
 
 **Release status: NOT APPROVED.** Deployment stays blocked until a human reviewer records approval here.
+
+### How to record approval (for the human reviewer only)
+
+1. Delete the "Release status: NOT APPROVED" line above (the gate rejects any negated approval text).
+2. Add exactly one line, on its own, outside any code block, in this exact form:
+
+```text
+APPROVED FOR RELEASE — Reviewer: <your full name> — Date: YYYY-MM-DD
+```
+
+3. Merge to `main`, then run **Actions → Deploy to GitHub Pages** from `main`, entering the same name.
+
+The example above is inside a code block, so it never counts as an approval.

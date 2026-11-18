@@ -60,11 +60,11 @@ Cents = dollars × 100 exactly (e.g. $1,132.90 → 113290).
 |---|---|
 | COLA | **3.6%** (360 basis points), Social Security COLA effective December 2026 / payable January 2027 |
 | SSA announcement | "Social Security Announces 3.6 Percent Benefit Increase for 2027", October 14, 2026 — https://www.ssa.gov/news/en/press/releases/2026-10-14.html |
-| How verified | Official ssa.gov press release, fact sheet (https://www.ssa.gov/news/en/cola/factsheets/2027.html) and SSA OIG notices returned by web search on 2026-11-18, all stating 3.6%. Direct download from ssa.gov was refused by SSA's CDN (HTTP 403 "Access Denied") from the build container, so no byte snapshot is stored. **Re-confirm in a browser before release.** |
+| How verified | (1) Official ssa.gov press release, fact sheet (https://www.ssa.gov/news/en/cola/factsheets/2027.html) and SSA OIG notices returned by web search on 2026-11-18, all stating 3.6%. (2) **Directly checked on SSA's official announcement page by the owner's independent reviewer (ChatGPT) on 2026-11-18 — confirms 3.6%.** The build container remains blocked by SSA's CDN (HTTP 403), so no byte snapshot is stored here. |
 | VA linkage | VA veteran-rates page: "We’re required by law to match the percentage of cost-of-living adjustments made to Social Security benefits." |
 | Legislation | S. 4487, Veterans' Compensation Cost-of-Living Adjustment Act of 2026 (introduced 2026-05-11; text saved at `docs/evidence/S4487-introduced-2026-05-11.pdf`): increases §1114 and §1115(1) amounts effective Dec 1, 2026 by the SSA percentage. Enactment status could not be confirmed (congress.gov status page blocked by bot protection). |
 | VA 2027 tables published? | **No** as of 2026-11-18 |
-| Projection method | Every official 2026 cell × 1.036, rounded half-up to the cent in integer math (`src/lib/projection.ts`); household rules then applied identically. |
+| Projection method | Every official 2026 cell × 1.036 (a 3.6% increase), rounded half-up to the cent in integer math (`src/lib/projection.ts`); household rules then applied identically. |
 | Known deviation risk | VA derives several 30–90% dependent amounts from 100% amounts under 38 U.S.C. 1115 and may round them; published 2027 cells can differ from projections by small amounts. When VA publishes, replace the projection with an official `RATES_2027` table and a new snapshot. |
 
 ## 38 CFR §§ 4.25 and 4.26

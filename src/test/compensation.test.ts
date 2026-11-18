@@ -4,7 +4,7 @@ import { COLA_2027 } from '../data/cola';
 import { HOUSEHOLD_RATINGS, type PayableRating } from '../data/types';
 import { calculateCompensation, type Household } from '../lib/compensation';
 import { projectRateTable } from '../lib/projection';
-import { applyBasisPoints, formatCents } from '../lib/money';
+import { applyBasisPoints, formatCents, formatMultiplier, formatPercentFromBasisPoints } from '../lib/money';
 import { loadVaSnapshot, dollarsToCents } from './snapshot';
 
 const base: Household = {
@@ -152,6 +152,36 @@ describe('unsupported and invalid situations never produce a number', () => {
   });
 });
 
+describe('VA-recognized permanently incapable adult child (not yet supported)', () => {
+  const p27 = projectRateTable(RATES_2026, COLA_2027);
+  it('suppresses totals at every rating from 30% to 100%, for 2026 and projected 2027', () => {
+    for (const rating of HOUSEHOLD_RATINGS) {
+      for (const extra of [{}, { hasSpouse: true }, { childrenUnder18: 2 }, { schoolChildren: 1, childrenUnder18: 1 }]) {
+        for (const table of [RATES_2026, p27]) {
+          const r = calculateCompensation({ ...base, ...extra, rating, permanentlyIncapableAdultChild: true }, table);
+          expect(r.kind, `${rating}% ${JSON.stringify(extra)}`).toBe('unsupported');
+          expect('monthly' in r).toBe(false);
+          if (r.kind === 'unsupported') expect(r.reasons.join(' ')).toMatch(/permanently incapable of self-support/);
+        }
+      }
+    }
+  });
+  it('at 10% and 20% the total is complete (VA: dependents never change these rates) and a note explains why', () => {
+    for (const rating of [10, 20] as const) {
+      const r = calculateCompensation({ ...base, rating, permanentlyIncapableAdultChild: true }, RATES_2026);
+      expect(r.kind).toBe('ok');
+      if (r.kind === 'ok') {
+        expect(r.monthly).toBe(RATES_2026.low[rating]);
+        expect(r.notes.join(' ')).toMatch(/permanently incapable of self-support/);
+      }
+    }
+  });
+  it('the flag defaults to off and does not affect ordinary households', () => {
+    const r = calculateCompensation({ ...base, rating: 70, hasSpouse: true }, RATES_2026);
+    expect(r.kind === 'ok' && r.monthly).toBe(196145);
+  });
+});
+
 describe('2027 projection', () => {
   const p = projectRateTable(RATES_2026, COLA_2027);
   it('is labeled projected and never official', () => {
@@ -184,6 +214,14 @@ describe('money helpers', () => {
     expect(applyBasisPoints(1250, 400)).toBe(1300); // 13.00
     expect(applyBasisPoints(125, 200)).toBe(128); // 127.5 → 128
     expect(applyBasisPoints(100, 0)).toBe(100);
+  });
+  it('formats the COLA as an exact multiplier and percent', () => {
+    expect(formatMultiplier(360)).toBe('1.036');
+    expect(formatPercentFromBasisPoints(360)).toBe('3.6%');
+    expect(formatMultiplier(280)).toBe('1.028');
+    expect(formatMultiplier(25)).toBe('1.0025');
+    expect(formatMultiplier(0)).toBe('1');
+    expect(formatPercentFromBasisPoints(1000)).toBe('10%');
   });
   it('formats cents', () => {
     expect(formatCents(393858)).toBe('$3,938.58');

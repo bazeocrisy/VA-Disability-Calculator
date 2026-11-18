@@ -1,5 +1,6 @@
 import { RATES_2026 } from '../data/rates2026';
 import { COLA_2027 } from '../data/cola';
+import { formatMultiplier, formatPercentFromBasisPoints } from '../lib/money';
 
 const SOURCES = [
   {
@@ -44,8 +45,9 @@ export function Sources() {
           <span className="badge badge--projected">Projected</span>
           <h3>2027 estimates</h3>
           <p>
-            2026 rates × {(COLA_2027.basisPoints / 100).toFixed(1)}% Social Security COLA (announced October 14, 2026).
-            VA had not published 2027 tables when last verified on {COLA_2027.lastVerified}.
+            2026 rates × {formatMultiplier(COLA_2027.basisPoints)} (a {formatPercentFromBasisPoints(COLA_2027.basisPoints)}{' '}
+            increase), from the Social Security COLA announced October 14, 2026. VA had not published 2027 tables when
+            last verified on {COLA_2027.lastVerified}.
           </p>
         </div>
       </div>
