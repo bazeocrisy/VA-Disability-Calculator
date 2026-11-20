@@ -59,6 +59,20 @@ describe('App', () => {
     expect(screen.getAllByText('$4,158.17').length).toBeGreaterThan(0);
   });
 
+  it('SMC label says it is not estimated; TDIU guidance is prominent and repeated by the result', () => {
+    render(<App />);
+    const smc = screen.getByLabelText(/Special Monthly Compensation \(SMC\)/);
+    expect(smc.closest('label')!.textContent).toMatch(/not estimated here/);
+    const note = document.querySelector('.tdiu-note')!;
+    expect(note.textContent).toMatch(/VA pays at the\s+100% rate/);
+    expect(note.classList.contains('field__hint')).toBe(false); // no longer muted small print
+    const inline = document.querySelector('.calc__results .tdiu-inline')!;
+    expect(inline.textContent).toMatch(/Granted TDIU\? VA pays it at the 100% rate/);
+    // TDIU is never assumed: the selected rating is unchanged (70%) and its official amount still shows
+    expect(screen.getByRole('heading', { name: /Your estimated compensation at 70%/ })).toBeTruthy();
+    expect(screen.getAllByText('$1,808.45').length).toBeGreaterThan(0);
+  });
+
   it('shows a warning and no amount for SMC', () => {
     render(<App />);
     fireEvent.click(screen.getByLabelText(/Special Monthly Compensation/));

@@ -721,6 +721,22 @@ select {
   -webkit-appearance: none;
   margin: 0;
 }
+.tdiu-note {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-left: 4px solid var(--military);
+  background: #eef3f9;
+  border-radius: 8px;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 1rem;
+}
+.tdiu-inline {
+  margin: -4px 0 14px;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 0.98rem;
+}
 .field--special {
   padding-top: 16px;
   border-top: 1px solid var(--line);

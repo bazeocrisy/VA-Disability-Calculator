@@ -285,7 +285,9 @@ export function QuickPay({ household: h, onChange }: Props) {
           <legend className="field__label">Special situations</legend>
           <label className="check">
             <input type="checkbox" checked={!!h.receivesSMC} onChange={(e) => set({ receivesSMC: e.target.checked })} />
-            <span>VA has awarded me Special Monthly Compensation (SMC)</span>
+            <span>
+              VA has awarded me Special Monthly Compensation (SMC) — <strong>not estimated here</strong>
+            </span>
           </label>
           <label className="check">
             <input
@@ -298,7 +300,7 @@ export function QuickPay({ household: h, onChange }: Props) {
             </span>
           </label>
           <p className="field__hint">Just yes or no — we never ask for medical details.</p>
-          <p className="field__hint">
+          <p className="tdiu-note">
             <strong>TDIU:</strong> if VA has granted Total Disability based on Individual Unemployability, VA pays at the
             100% rate — select 100% only if VA has granted it. This calculator never assumes TDIU or SMC.
           </p>
@@ -320,6 +322,9 @@ export function QuickPay({ household: h, onChange }: Props) {
             ? `2026 official monthly amount ${formatCents(r2026.monthly)}.`
             : 'No estimate shown for this situation.'}
           {r2027.kind === 'ok' ? ` 2027 projected monthly amount ${formatCents(r2027.monthly)}.` : ''}
+        </p>
+        <p className="tdiu-inline">
+          <strong>Granted TDIU?</strong> VA pays it at the 100% rate — choose 100% only if VA has granted it.
         </p>
         <div className="result-grid">
           <ResultCard result={r2026} kind="official" />
